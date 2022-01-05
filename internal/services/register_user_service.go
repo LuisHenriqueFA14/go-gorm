@@ -29,6 +29,10 @@ func (s RegisterUserService) Execute(name, email, password string) ([]byte, erro
 		return nil, errors.New("Password must have at least 6 characters")
 	}
 
+	if strings.Contains(name, " ") {
+		return nil, errors.New("Name cannot contain spaces")
+	}
+
 	userAlreadyExists := db.Db.First(&models.User{}, "email = ?", email)
 
 	if userAlreadyExists.Error == nil {
