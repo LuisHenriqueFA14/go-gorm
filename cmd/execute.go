@@ -19,8 +19,10 @@ func Execute() {
 	database.CreateDatabase(db)
 
 	registerUserController := controllers.RegisterUserController{}
+	deleteUserController := controllers.DeleteUserController{}
 
 	http.HandleFunc("/users/register", registerUserController.Handle)
+	http.HandleFunc("/users/delete", deleteUserController.Handle)
 
 	fmt.Println("🚀 Server is running!")
 	err = http.ListenAndServe(":3000", nil)
