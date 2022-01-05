@@ -17,6 +17,11 @@ type RegisterUserController struct {}
 
 
 func (c RegisterUserController) Handle(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
 	registerUserService := services.RegisterUserService{}
 
 	u := User{}
@@ -33,5 +38,13 @@ func (c RegisterUserController) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	registerUserService.Execute(u.Name, u.Email, u.Password)
+	response, err := registerUserService.Execute(u.Name, u.Email, u.Password)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(response)
 }
