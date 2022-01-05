@@ -33,10 +33,15 @@ func (s RegisterUserService) Execute(name, email, password string) ([]byte, erro
 		return nil, errors.New("Name cannot contain spaces")
 	}
 
-	userAlreadyExists := db.Db.First(&models.User{}, "email = ?", email)
+	userAlreadyExistsEmail := db.Db.First(&models.User{}, "email = ?", email)
+	userAlreadyExistsName := db.Db.First(&models.User{}, "name = ?", strings.ToLower(name))
 
-	if userAlreadyExists.Error == nil {
-		return nil, errors.New("User already exists")
+	if userAlreadyExistsEmail.Error == nil {
+		return nil, errors.New("Email already in use")
+	}
+
+	if userAlreadyExistsName.Error == nil {
+		return nil, errors.New("Name already in use")
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), 8)
@@ -44,7 +49,7 @@ func (s RegisterUserService) Execute(name, email, password string) ([]byte, erro
 
 	u := models.User {
 		Id: uuid.NewString(),
-		Name: name,
+		Name: strings.ToLower(name),
 		Email: email,
 		Password: hashPassword,
 	}
