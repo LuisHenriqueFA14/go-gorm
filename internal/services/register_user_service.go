@@ -9,9 +9,10 @@ import (
 	"github.com/LuisHenriqueFA14/go-gorm/internal/models"
 
 	"github.com/google/uuid"
+    "golang.org/x/crypto/bcrypt"
 )
 
-type user struct {
+type register_user struct {
 	Id    string `json:"id"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
@@ -34,16 +35,19 @@ func (s RegisterUserService) Execute(name, email, password string) ([]byte, erro
 		return nil, errors.New("User already exists")
 	}
 
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), 8)
+	hashPassword := string(hash)
+
 	u := models.User {
 		Id: uuid.NewString(),
 		Name: name,
 		Email: email,
-		Password: password,
+		Password: hashPassword,
 	}
 
 	db.Db.Create(&u)
 
-	res, err := json.Marshal(user {
+	res, err := json.Marshal(register_user {
 		Id: u.Id,
 		Name: u.Name,
 		Email: u.Email,

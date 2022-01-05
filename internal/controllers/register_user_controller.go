@@ -7,7 +7,7 @@ import (
 	"github.com/LuisHenriqueFA14/go-gorm/internal/services"
 )
 
-type User struct {
+type register_user struct {
 	Name string `json:"name"`
 	Email string `json:"email"`
 	Password string `json:"password"`
@@ -24,7 +24,7 @@ func (c RegisterUserController) Handle(w http.ResponseWriter, r *http.Request) {
 
 	registerUserService := services.RegisterUserService{}
 
-	u := User{}
+	u := register_user{}
 	
 	err := json.NewDecoder(r.Body).Decode(&u)
 
