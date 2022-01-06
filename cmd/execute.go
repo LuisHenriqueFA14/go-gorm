@@ -6,6 +6,7 @@ import (
 
 	"github.com/LuisHenriqueFA14/go-gorm/internal/database"
 	"github.com/LuisHenriqueFA14/go-gorm/internal/controllers"
+	"github.com/LuisHenriqueFA14/go-gorm/internal/auth"
 
 	"gorm.io/gorm"
 	"gorm.io/driver/sqlite"
@@ -17,6 +18,8 @@ func Execute() {
 		panic("failed to connect database")
 	}
 	database.CreateDatabase(db)
+
+	auth.LoadJWTSecret()
 
 	registerUserController := controllers.RegisterUserController{}
 	deleteUserController := controllers.DeleteUserController{}
