@@ -1,11 +1,9 @@
 package auth
 
 import (
-	"fmt"
-
-	"github.com/joho/godotenv"
-
 	"os"
+	
+	"github.com/joho/godotenv"
 )
 
 var JWTToken string
@@ -21,6 +19,4 @@ func LoadJWTSecret() {
 	if JWTToken == "" {
 		panic("JWT_TOKEN is not defined")
 	}
-
-	fmt.Println(JWTToken)
 }
