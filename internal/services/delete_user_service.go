@@ -3,11 +3,14 @@ package services
 import (
 	"encoding/json"
 	"errors"
+	"time"
 
+	"github.com/LuisHenriqueFA14/go-gorm/internal/auth"
 	db "github.com/LuisHenriqueFA14/go-gorm/internal/database"
 	"github.com/LuisHenriqueFA14/go-gorm/internal/models"
 
 	"golang.org/x/crypto/bcrypt"
+	"github.com/golang-jwt/jwt"
 )
 
 type delete_response struct {
@@ -16,40 +19,46 @@ type delete_response struct {
 
 type DeleteUserService struct {}
 
-func (s DeleteUserService) Execute(id, email, password string) ([]byte, error) {
-	if id == "" && email == "" {
-		return nil, errors.New("Missing fields")
+func (s DeleteUserService) Execute(token, password string) ([]byte, error) {
+	decoded, err := jwt.ParseWithClaims(
+		token,
+		&JwtClaim{},
+		func(token *jwt.Token) (interface{}, error) {
+			return []byte(auth.JWTToken), nil
+		},
+	)
+
+	if err != nil {
+		return nil, errors.New("Invalid Token")
 	}
 
-	if id != "" {
-		var user models.User
-		db.Db.Where("id = ?", id).First(&user)
-
-		if user.Id == "" {
-			return nil, errors.New("User not found")
-		}
-
-		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err == nil {
-			db.Db.Unscoped().Delete(&user)
-			return json.Marshal(delete_response{Message: "User deleted"})
-		} else {
-			return nil, errors.New("Wrong password")
-		}
-	} else if email != "" {
-		var user models.User
-		db.Db.Where("email = ?", email).First(&user)
-
-		if user.Id == "" {
-			return nil, errors.New("User not found")
-		}
-
-		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err == nil {
-			db.Db.Unscoped().Delete(&user)
-			return json.Marshal(delete_response{Message: "User deleted"})
-		} else {
-			return nil, errors.New("Wrong password")
-		}
+	claims, ok := decoded.Claims.(*JwtClaim)
+	if !ok {
+		return nil, errors.New("Couldn't parse claims")
 	}
 
-	return nil, errors.New("Invalid fields")
+	if claims.ExpiresAt < time.Now().Local().Unix() {
+		return nil, errors.New("JWT is expired")
+	}
+
+	user := models.User{}
+	db.Db.Where("id = ?", claims.Id).First(&user)
+
+	if user.Id == "" {
+		return nil, errors.New("User not found")
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+		return nil, errors.New("Invalid password")
+	}
+
+	db.Db.Unscoped().Delete(&user)
+
+	response, err := json.Marshal(delete_response{Message: "User deleted"})
+
+	if err != nil {
+		return nil, errors.New("Couldn't marshal response")
+	}
+
+	return response, nil
 }
